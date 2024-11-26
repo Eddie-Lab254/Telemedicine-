@@ -83,7 +83,7 @@ exports.updateAppointment = async (req, res) => {
 
     try {
         // Find the appointment by ID
-        const appointment = await Appointment.findById(appointmentId);
+        const appointment = await appointment.findById(appointmentId);
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });

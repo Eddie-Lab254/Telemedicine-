@@ -63,38 +63,9 @@
 
     <script>
         // Fetch doctors from the backend
-        // async function fetchDoctors() {
-        //     try {
-        //         const response = await fetch('/telemedicine/api/doctors'); // Update with correct API if necessary
-        //         const doctors = await response.json();
-
-        //         // Ensure the doctor dropdown exists
-        //         // const doctorSelect = document.getElementById('doctor_doctor');
-        //         if (response.ok) {
-        //             const doctorSelect = document.getElementById('doctor_doctor');
-        //             doctorSelect.innerHTML = '<option value="" disabled selected>Select a doctor</option>';
-
-        //             // Populate the dropdown with doctors
-        //             doctors.forEach(doctor => {
-        //                 const option = document.createElement('option');
-        //                 option.value = doctor.id; // Assuming each doctor has a unique 'id'
-        //                 option.textContent = `${doctor.name} (${doctor.specialization})`; // Display name and specialization
-        //                 doctorSelect.appendChild(option);
-        //             });
-        //         }
-        //     } catch (error) {
-        //         console.error('Error fetching doctor data:', error);
-        //     }
-        // }
-
-        // document.addEventListener('DOMContentLoaded', fetchDoctors);
-  
-
-
-  // Fetch doctors from the backend
-  async function fetchDoctors() {
+        async function fetchDoctors() {
             try {
-                const response = await fetch('/telemedicine/api/doctors');
+                const response = await fetch('/telemedicine/api/doctors'); // Update with correct API if necessary
                 const doctors = await response.json();
 
                 // Ensure the doctor dropdown exists
@@ -116,11 +87,7 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', fetchDoctors);
-        async function refreshDoctorsListOnRegistration() {
-            await fetchDoctors();
-    }
-
+        // document.addEventListener('DOMContentLoaded', fetchDoctors);
 
         // Handle form submission for creating an appointment
         document.addEventListener('DOMContentLoaded', function() {
@@ -185,131 +152,303 @@
     });
 });
 
-//Handle the Reschedule button click
-document.getElementById('reschedule-button').addEventListener('click', () => {
-    document.getElementById('reschedule-form').style.display = 'block'; // Show the reschedule form
-    document.getElementById('appointment-details').style.display = 'none'; // Hide the appointment details
-});
+async function fetchDoctors(){
+    try{
+        const response = await fetch ('/telemedicine/api/doctors');
+        const doctors = await response.json();
 
-// Handle the Cancel Reschedule button click
-document.getElementById('cancel-reschedule').addEventListener('click', () => {
-    document.getElementById('reschedule-form').style.display = 'none'; // Hide the reschedule form
-    document.getElementById('appointment-details').style.display = 'block'; // Show the appointment details
-});
+        if(response.ok){
+            const doctorSelect = document.getElementById('doctor-doctor');
+            doctorSelect.innerHTML = '<option value="" disabled selected>Select a doctor</option>';
 
-// Handle the Confirm Reschedule button click
-document.getElementById('confirm-reschedule').addEventListener('click', async () => {
-    const newAppointmentDate = document.getElementById('new-appointment-date').value;
-    const newAppointmentTime = document.getElementById('new-appointment-time').value;
-
-    // Check if new date and time are provided
-    if (!newAppointmentDate || !newAppointmentTime) {
-        alert('Please provide a new date and time.');
-        return;
-    }
-
-    try {
-        const response = await fetch(`/telemedicine/api/appointments/${window.appointmentId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                appointment_date: newAppointmentDate,
-                appointment_time: newAppointmentTime
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // Update the appointment details on the page
-            document.getElementById('appointment_date').textContent = newAppointmentDate;
-            document.getElementById('appointment_time').textContent = newAppointmentTime;
-
-            // Hide the reschedule form and show the updated details
-            document.getElementById('reschedule-form').style.display = 'none';
-            document.getElementById('appointment-details').style.display = 'block';
-
-            fetchDoctors();
-
-            alert('Appointment rescheduled successfully');
-        } else {
-            alert(data.message); // Display any errors from the server
+            doctor.forEach(doctor => {
+                const option = document.createElement('option');
+                option.value = doctor.id;
+                option.textContent = `${doctor.name} (${doctor.specialization})`;
+                doctorSelect.appendChild(option);
+            });
         }
     } catch (error) {
+        console.error('Error fetching doctor data:', error);
+    }
+
+}
+
+    async  function fetchAppointments(){
+        try{
+            const response = await fetch ('/telemedicine/api/appointment');
+            const appointments = await response.json();
+
+            if(response.ok){
+                const appointmentsList = document.getElementById('appointments-list');
+                appointmentsList.innerHTML = '';
+
+                appointments.forEach(appointment =>{
+                    const appointmentItem = document.createElement('div');
+                    appointmentItem.innerHTML = `
+                    <p>Patient Name: ${appointment.patient_name}</p>
+                    <p>Doctor ID: ${appointment.doctor_id}</p>
+                    <p>Date: ${appointment.appointment_date}</p>
+                    <p>Time: ${appointment.appointment_time}</p>
+                    <p>Status: ${appointment.status}</p>
+                    <button onclick="handleReschedule(${appointment.id})">Reschedule</button>
+                    <button onclick="handleDelete(${appointment.id})">Delete</button>
+                    
+                    `;
+                    appointmentsList.appendChild(appointmentItem);
+                })
+            }
+        }catch (error){
+            console.log('Error fetching appointment data:',error);
+
+        }
+
+    }
+
+    //handle reschedule
+    async function handleReschedule(appointmentId){
+      if(!appointmentId){
+        alert('Appointment ID is missing');
+        return;
+      }
+      const newAppoinmentDate = document.getElementById('new-appointment-date').value;
+      const newAppointmentTime = document.getElementById('new-appointment-time').value;
+    }
+
+    if(!newAppointmentDate || !newAppointmentTime){
+        alert('Please provide a nw date and time');
+        return;
+    }
+     try{
+        const response = await fetch (`/telemedicine/api/appointments/${appointmentId}`,{
+                method:'PUT',
+                headers:{'content-Type' :'application/json'},
+                body:JSON.stringify({
+                    appointment_date: newAppointmentDate,
+                    appointment_time: newAppointmentTime
+                })
+
+        });
+        const data = await response.json();
+         
+        if(response.ok){
+            fetchAppointment();
+            alert('Appointment reschedule successfully');
+        }else{
+            alert(data.message);
+        }
+     }catch(error){
         console.error('Error rescheduling appointment:', error);
         alert('Error rescheduling appointment');
-    }
-});
+     }
 
-// Handle the Delete button click
-document.getElementById('delete-button').addEventListener('click', async () => {
-    const confirmDelete = confirm('Are you sure you want to delete this appointment?');
+     //delete appointment
+     async function handleDelete(appointmentId){
 
-    if (confirmDelete) {
-        try {
-            const response = await fetch(`/telemedicine/api/appointments/${window.appointmentId}`, {
-                method: 'DELETE'
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // Hide the appointment details and show a message
-                document.getElementById('appointment-details').style.display = 'none';
-                alert('Appointment deleted successfully');
-
-                fetchDoctors();
-
-            } else {
-                alert(data.message); // Display any errors from the server
-            }
-        } catch (error) {
-            console.error('Error deleting appointment:', error);
-            alert('Error deleting appointment');
+        if(!appointmentId){
+            alert('Appointment ID is missing');
+            return;
         }
-    }
-});
+       const  confirmDelete = confirm("Really want to delete the appointment?");
+        if(!confirmDelete)
+        return;
+     }
 
-app.put('/telemedicine/api/appointments/:id', (req, res) => {
-    const { id } = req.params;
-    const { appointment_date, appointment_time } = req.body;
+     try {
+        const response = await fetch(`/telemedicine/api/appointments/${appointmentId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
 
-    // Check for missing data
-    if (!appointment_date || !appointment_time) {
-        return res.status(400).json({ message: 'Appointment date and time are required' });
-    }
+        if(response.ok){
+            fetchAppointments();
+            alert('Appointment deleted successfully');
 
-    // Update the appointment
-    const query = 'UPDATE appointments SET appointment_date = ?, appointment_time = ? WHERE id = ?';
-    db.execute(query, [appointment_date, appointment_time, id], (error, results) => {
-        if (error) {
-            console.error('Error updating appointment:', error);
-            return res.status(500).json({ message: 'Error updating appointment' });
-        }
-        res.status(200).json({ message: 'Appointment rescheduled successfully' });
+       } else {
+        alert(data.message);
+
+       }
+
+       } catch (error) {
+        console.error('Error deleting appointment:', error);
+        alert('Error deleting appointment');
+       }
+     
+     //load data on page load
+     document.addEventListener('DOMContentLoaded', function() {
+    fetchDoctors();
+    fetchAppointments();
     });
-});
+     
 
-app.delete('/telemedicine/api/appointments/:id', (req, res) => {
-    const { id } = req.params;
+//     try {
+//         const response = await fetch(`/telemedicine/api/appointments/${window.appointmentId}`, {
+//             method: 'PUT',
+//             headers: { 'Content-Type': 'application/json' },
+//             body: JSON.stringify({
+//                 appointment_date: newAppointmentDate,
+//                 appointment_time: newAppointmentTime
+//             })
+//         });
 
-    // Delete the appointment
-    const query = 'DELETE FROM appointments WHERE id = ?';
-    db.execute(query, [id], (error, results) => {
-        if (error) {
-            console.error('Error deleting appointment:', error);
-            return res.status(500).json({ message: 'Error deleting appointment' });
-        }
-        res.status(200).json({ message: 'Appointment deleted successfully' });
-    });
-});
+//         const data = await response.json();
 
+//         if (response.ok) {
+//             // Update the appointment details on the page
+//             document.getElementById('appointment_date').textContent = newAppointmentDate;
+//             document.getElementById('appointment_time').textContent = newAppointmentTime;
+
+//             // Hide the reschedule form and show the updated details
+//             document.getElementById('reschedule-form').style.display = 'none';
+//             document.getElementById('appointment-details').style.display = 'block';
+
+//             fetchDoctors();
+
+//             alert('Appointment rescheduled successfully');
+//         } else {
+//             alert(data.message); // Display any errors from the server
+//         }
+//     } catch (error) {
+//         console.error('Error rescheduling appointment:', error);
+//         alert('Error rescheduling appointment');
+//     }
+// });
+
+// // Handle the Delete button click
+// document.getElementById('delete-button').addEventListener('click', async () => {
+//     const confirmDelete = confirm('Are you sure you want to delete this appointment?');
+
+//     if (confirmDelete) {
+//         try {
+//             const response = await fetch(`/telemedicine/api/appointments/${window.appointmentId}`, {
+//                 method: 'DELETE'
+//             });
+
+//             const data = await response.json();
+
+//             if (response.ok) {
+//                 // Hide the appointment details and show a message
+//                 document.getElementById('appointment-details').style.display = 'none';
+//                 alert('Appointment deleted successfully');
+
+//                 fetchDoctors();
+
+//             } else {
+//                 alert(data.message); // Display any errors from the server
+//             }
+//         } catch (error) {
+//             console.error('Error deleting appointment:', error);
+//             alert('Error deleting appointment');
+//         }
+//     }
+// });
+
+// app.put('/telemedicine/api/appointments/:id', (req, res) => {
+//     const { id } = req.params;
+//     const { appointment_date, appointment_time } = req.body;
+
+//     // Check for missing data
+//     if (!appointment_date || !appointment_time) {
+//         return res.status(400).json({ message: 'Appointment date and time are required' });
+//     }
+
+//     // Update the appointment
+//     const query = 'UPDATE appointments SET appointment_date = ?, appointment_time = ? WHERE id = ?';
+//     db.execute(query, [appointment_date, appointment_time, id], (error, results) => {
+//         if (error) {
+//             console.error('Error updating appointment:', error);
+//             return res.status(500).json({ message: 'Error updating appointment' });
+//         }
+//         res.status(200).json({ message: 'Appointment rescheduled successfully' });
+//     });
+// });
+
+// app.delete('/telemedicine/api/appointments/:id', (req, res) => {
+//     const { id } = req.params;
+
+//     // Delete the appointment
+//     const query = 'DELETE FROM appointments WHERE id = ?';
+//     db.execute(query, [id], (error, results) => {
+//         if (error) {
+//             console.error('Error deleting appointment:', error);
+//             return res.status(500).json({ message: 'Error deleting appointment' });
+//         }
+//         res.status(200).json({ message: 'Appointment deleted successfully' });
+//     });
+// });
+
+
+
+        // Function to fetch and display the patient's appointments
+        // async function fetchAppointments() {
+        //     try {
+        //         const response = await fetch('/telemedicine/api/appointments');
+        //         if (!response.ok) {
+        //             throw new Error('Network response was not ok');
+        //         }
+        //         const appointments = await response.json();
+
+        //         // Get the appointment list container element
+        //         const appointmentListContainer = document.getElementById('appointments-list');
+        //         appointmentListContainer.innerHTML = ''; // Clear existing content
+
+        //         // Loop through the appointments and display them
+        //         appointments.forEach(appointment => {
+        //             const appointmentDiv = document.createElement('div');
+        //             appointmentDiv.classList.add('appointment-item');
+        //             appointmentDiv.innerHTML = `
+        //                 <p><strong>Patient:</strong> ${appointment.patient_name}</p>
+        //                 <p><strong>Doctor:</strong> ${appointment.doctor_name} (${appointment.specialization})</p>
+        //                 <p><strong>Date:</strong> ${appointment.appointment_date}</p>
+        //                 <p><strong>Time:</strong> ${appointment.appointment_time}</p>
+        //                 <button class="btn btn-danger" onclick="deleteAppointment(${appointment.id})">Delete</button>
+        //                 <button class="btn btn-warning" onclick="rescheduleAppointment(${appointment.id})">Reschedule</button>
+        //             `;
+        //             appointmentListContainer.appendChild(appointmentDiv);
+        //         });
+        //     } catch (error) {
+        //         console.error('Error fetching appointments:', error);
+        //     }
+        // }
+
+        // // Function to delete an appointment
+        // async function deleteAppointment(appointmentId) {
+        //     const response = await fetch(`/telemedicine/api/appointments/${appointmentId}`, {
+        //         method: 'DELETE',
+        //     });
+
+        //     const data = await response.json();
+        //     if (response.ok) {
+        //         alert('Appointment deleted successfully');
+        //         fetchAppointments(); // Refresh the appointment list
+        //     } else {
+        //         alert('Error deleting appointment: ' + data.message);
+        //     }
+        // }
+
+        // // Function to reschedule an appointment
+        // async function rescheduleAppointment(appointmentId) {
+        //     const newDate = prompt('Enter new date (YYYY-MM-DD):');
+        //     const newTime = prompt('Enter new time (HH:MM):');
+
+        //     const response = await fetch(`/telemedicine/api/appointments/${appointmentId}`, {
+        //         method: 'PUT',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify({ appointment_date: newDate, appointment_time: newTime })
+        //     });
+
+        //     const data = await response.json();
+        //     if (response.ok) {
+        //         alert('Appointment rescheduled successfully');
+        //         fetchAppointments(); // Refresh the appointment list
+        //     } else {
+        //         alert('Error rescheduling appointment: ' + data.message);
+        //     }
+        // }
 
         // Fetch doctors and appointments on page load
- window.onload = () => {
-            fetchDoctors(); 
-            fetchAppointments();
-        };
+       
     </script>
 </body>
 </html>
